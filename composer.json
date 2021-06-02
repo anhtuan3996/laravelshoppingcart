@@ -1,6 +1,6 @@
 {
-    "name": "darryldecode/cart",
-    "description": "Laravel 5 Shopping cart",
+    "name": "anhtuan3996/cart",
+    "description": "Laravel 5 Shopping cart, this cart fork from cart package of darryldecode and modify something",
     "keywords": ["laravel", "shopping cart", "cart"],
     "license": "MIT",
     "authors": [

@@ -64,7 +64,7 @@ class Cart
 
     /**
      * This holds the currently added item id in cart for association
-     * 
+     *
      * @var
      */
     protected $currentItemId;
@@ -270,6 +270,63 @@ class Cart
         }
 
         $cart->put($id, $item);
+
+        $this->save($cart);
+
+        $this->fireEvent('updated', $item);
+        return true;
+    }
+
+    /**
+     * update a cart without sort, we use replace, don't use pull and push array
+     *
+     * @param $id
+     * @param array $data
+     *
+     * the $data will be an associative array, you don't need to pass all the data, only the key value
+     * of the item you want to update on it
+     * @return bool
+     */
+    public function updateWithoutSort($id, $data)
+    {
+        if ($this->fireEvent('updating', $data) === false) {
+            return false;
+        }
+
+        $cart = $this->getContent();
+
+        $item = $cart->get($id);
+
+
+        foreach ($data as $key => $value) {
+            // if the key is currently "quantity" we will need to check if an arithmetic
+            // symbol is present so we can decide if the update of quantity is being added
+            // or being reduced.
+            if ($key == 'quantity') {
+                // we will check if quantity value provided is array,
+                // if it is, we will need to check if a key "relative" is set
+                // and we will evaluate its value if true or false,
+                // this tells us how to treat the quantity value if it should be updated
+                // relatively to its current quantity value or just totally replace the value
+                if (is_array($value)) {
+                    if (isset($value['relative'])) {
+                        if ((bool)$value['relative']) {
+                            $item = $this->updateQuantityRelative($item, $key, $value['value']);
+                        } else {
+                            $item = $this->updateQuantityNotRelative($item, $key, $value['value']);
+                        }
+                    }
+                } else {
+                    $item = $this->updateQuantityRelative($item, $key, $value);
+                }
+            } elseif ($key == 'attributes') {
+                $item[$key] = new ItemAttributeCollection($value);
+            } else {
+                $item[$key] = $value;
+            }
+        }
+
+        $cart->replace([$id => $item]);
 
         $this->save($cart);
 
